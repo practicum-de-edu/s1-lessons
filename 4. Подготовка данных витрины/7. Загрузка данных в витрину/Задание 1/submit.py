@@ -1,18 +1,9 @@
 #!/usr/bin/env python3
 
 import os
-import sys
+
+from run_checker import submit
 
 DE_S1_TEST = 'de01032008'
 
-LESSON_TESTS_PATH = '/app'
-
-if __name__ == '__main__':
-    sys.path.append(LESSON_TESTS_PATH)
-    full_lesson_path = os.path.dirname(os.path.abspath(__file__))
-
-    from run_tests import run_tests
-
-    result = run_tests(full_lesson_path, DE_S1_TEST)
-
-    print(result)
+submit(os.path.dirname(os.path.abspath(__file__)), DE_S1_TEST)

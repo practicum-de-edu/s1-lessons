@@ -4,4 +4,6 @@ import os
 
 from run_checker import submit
 
-submit(os.path.dirname(os.path.abspath(__file__)), 'health')
+DE_S1_TEST = 'de01021302'
+
+submit(os.path.dirname(os.path.abspath(__file__)), DE_S1_TEST)
