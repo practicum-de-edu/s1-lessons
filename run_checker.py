@@ -4,9 +4,23 @@ import sys
 
 import requests
 
-from settings import CHECK_SERVICE_HOST, TerminalColors, pg_settings, student
+from settings import PG_SETTINGS, STUDENT
 
+
+CHECK_SERVICE_HOST = 'localhost:8000'
 API_PATH = 'api/v1/checks'
+
+
+class TerminalColors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 
 def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
@@ -24,9 +38,9 @@ def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
         r = requests.post(
             f'http://{CHECK_SERVICE_HOST}/{API_PATH}/{checker}',
             json={
-                "student_id": student,
+                "student_id": STUDENT,
                 "student_solution": user_code,
-                "student_db_connection": pg_settings
+                "student_db_connection": PG_SETTINGS
             },
             timeout=300
         )
@@ -63,9 +77,9 @@ def init():
         r = requests.post(
             f'http://{CHECK_SERVICE_HOST}/{checker}',
             json={
-                'student_id': student,
+                'student_id': STUDENT,
                 'lesson_key': 'de01010101',
-                'student_db_connection': pg_settings
+                'student_db_connection': PG_SETTINGS
             }
         )
 
