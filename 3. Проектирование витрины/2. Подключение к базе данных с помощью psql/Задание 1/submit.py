@@ -4,7 +4,6 @@ import os
 
 from run_checker import submit
 
-
 submit(
     os.path.dirname(os.path.abspath(__file__)),
-    'de01040202_latest_phone_order')
+    'de01030201_table_count')

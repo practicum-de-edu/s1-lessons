@@ -5,6 +5,6 @@ import os
 from run_checker import submit
 
 
-DE_S1_TEST = 'de01031905'
-
-submit(os.path.dirname(os.path.abspath(__file__)), DE_S1_TEST)
+submit(
+    os.path.dirname(os.path.abspath(__file__)),
+    'de01040101_duplicates_check')
