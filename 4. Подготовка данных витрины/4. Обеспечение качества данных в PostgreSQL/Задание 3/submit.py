@@ -4,6 +4,6 @@ import os
 
 from run_checker import submit
 
-DE_S1_TEST = 'de01032003'
-
-submit(os.path.dirname(os.path.abspath(__file__)), DE_S1_TEST)
+submit(
+    os.path.dirname(os.path.abspath(__file__)),
+    'de01040403_user_contacts_phone_not_null')
