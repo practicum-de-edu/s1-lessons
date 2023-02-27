@@ -4,6 +4,7 @@ import os
 
 from run_checker import submit
 
-DE_S1_TEST = 'de01032205'
 
-submit(os.path.dirname(os.path.abspath(__file__)), DE_S1_TEST)
+submit(
+    os.path.dirname(os.path.abspath(__file__)),
+    'de01040705_insert_into_ccm')
