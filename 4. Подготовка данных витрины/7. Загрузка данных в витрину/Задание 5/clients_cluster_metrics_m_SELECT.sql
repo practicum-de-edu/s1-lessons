@@ -1,58 +1,66 @@
-with act_lg as (
-	select date_trunc('month',hitdatetime)::date "month",
-		client_id,
-		count(1) total_events,
-		count(case when "action" = 'visit' then 1 end) visit_events,
-		count(case when "action" = 'registration' then 1 end) registration_events,
-		count(case when "action" = 'login' then 1 end) login_events,
-		count(case when ("action" = 'login') and (prev_action = 'visit') then 1 end) visit_to_login_events
-	from (
-		select *,
-			lag("action") over (partition by client_id order by hitdatetime) prev_action
-		from user_activity_log
-		where extract(year from hitdatetime) = 2021
-			and "action" != 'N/A'
-		)t
-	group by 1,2
-	),
-pmnts as (
-	select date_trunc('month',hitdatetime)::date "month",
-		client_id,
-		count(1) total_pay_events,
-		count(case when "action" = 'accept-method' then 1 end) accepted_method_actions,
-		count(case when "action" = 'make-payment' then 1 end) made_payments,
-		avg(case when "action" = 'make-payment' then coalesce(payment_amount,0) else 0 end) avg_payment,
-		sum(case when "action" = 'make-payment' then coalesce(payment_amount,0) else 0 end) sum_payments,
-		sum(case when "action" = 'reject-payment' then coalesce(payment_amount,0) else 0 end)
-			/ nullif(sum(case when "action" = 'make-payment' then coalesce(payment_amount,0) else 0 end),0) rejects_share
-	from user_payment_log
-	where extract(year from hitdatetime) = 2021
-	group by 1,2
+WITH activity_stats AS (
+    SELECT
+        date_trunc('month', hitdatetime)::date                                          AS "month",
+        client_id                                                                       AS client_id,
+        COUNT(1)                                                                        AS total_events,
+        SUM(CASE WHEN "action" = 'visit' THEN 1 ELSE 0 END)                             AS visit_events,
+        SUM(CASE WHEN "action" = 'registration' THEN 1 ELSE 0 END)                      AS registration_events,
+        SUM(CASE WHEN "action" = 'login' THEN 1 ELSE 0 END)                             AS login_events,
+        SUM(CASE WHEN "action" = 'login' AND prev_action = 'visit' THEN 1 ELSE 0 END)   AS visit_to_login_events
+    FROM (
+        SELECT
+            *,
+            LAG("action") OVER (PARTITION BY client_id ORDER BY hitdatetime ASC) AS prev_action
+        FROM user_activity_log
+        WHERE
+            extract(year FROM hitdatetime) = 2021
+            AND "action" != 'N/A'
+        ) AS t
+    GROUP BY 1,2
 ),
-cntct as (
-SELECT DISTINCT ON (client_id) client_id,
-	SUBSTR(REGEXP_REPLACE(phone,'[^0123456789]','','g'),2,3) AS reg_code
-FROM user_contacts
-ORDER BY client_id,created_at DESC 
+payment_stats AS (
+    SELECT
+        date_trunc('month',hitdatetime)::date AS "month",
+        client_id AS client_id,
+        count(1) AS total_pay_events,
+        count(CASE WHEN "action" = 'accept-method' THEN 1 END) AS accepted_method_actions,
+        count(CASE WHEN "action" = 'make-payment' THEN 1 END) AS made_payments,
+        avg(CASE WHEN "action" = 'make-payment' THEN coalesce(payment_amount,0) ELSE 0 END) AS avg_payment,
+        sum(CASE WHEN "action" = 'make-payment' THEN coalesce(payment_amount,0) ELSE 0 END) AS sum_payments,
+        sum(CASE WHEN "action" = 'reject-payment' THEN coalesce(payment_amount, 0) ELSE 0 END)
+            / nullif(sum(CASE WHEN "action" = 'make-payment' THEN coalesce(payment_amount,0) ELSE 0 END), 0)    AS rejects_share
+    FROM user_payment_log
+    WHERE extract(year FROM hitdatetime) = 2021
+    GROUP BY 1,2
+),
+user_contacts_latest AS (
+    SELECT DISTINCT ON (client_id)
+        client_id,
+	    SUBSTR(REGEXP_REPLACE(phone,'[^0123456789]','','g'),2,3) AS reg_code
+    FROM user_contacts
+    ORDER BY client_id ASC, created_at DESC
 )
-select coalesce(a."month",p."month") "month",
-	ua.client_id,
-	ua.utm_campaign,
-	c.reg_code,
-	coalesce(a.total_events,0) total_events,
-	coalesce(a.visit_events,0) visit_events,
-	coalesce(a.registration_events,0) registration_events,
-	coalesce(a.login_events,0) login_events,
-	coalesce(a.visit_to_login_events,0) visit_to_login_events,
-	coalesce(p.total_pay_events,0) total_pay_events,
-	coalesce(p.accepted_method_actions,0) accepted_method_actions,
-	coalesce(p.avg_payment,0) avg_payment,
-	coalesce(p.made_payments,0) made_payments,
-	coalesce(p.sum_payments,0) sum_payments,
-	p.rejects_share
-from act_lg a
-full join pmnts p on p."month" = a."month"
-				and p.client_id = a.client_id
-join user_attributes ua on ua.client_id = coalesce(a.client_id,p.client_id)
-left join cntct c on c.client_id = ua.client_id
-order by 1,2;
+SELECT
+    coalesce(a."month", p."month")          AS "month",
+    ua.client_id                            AS client_id,
+    ua.utm_campaign                         AS utm_campaign,
+    contacts.reg_code                       AS reg_code,
+    coalesce(a.total_events,0)              AS total_events,
+    coalesce(a.visit_events,0)              AS visit_events,
+    coalesce(a.registration_events, 0)      AS registration_events,
+    coalesce(a.login_events, 0)             AS login_events,
+    coalesce(a.visit_to_login_events, 0)    AS visit_to_login_events,
+    coalesce(p.total_pay_events, 0)         AS total_pay_events,
+    coalesce(p.accepted_method_actions, 0)  AS accepted_method_actions,
+    coalesce(p.avg_payment, 0)              AS avg_payment,
+    coalesce(p.made_payments, 0)            AS made_payments,
+    coalesce(p.sum_payments, 0)             AS sum_payments,
+    p.rejects_share                         AS rejects_share
+FROM activity_stats AS a
+    FULL JOIN payment_stats AS p
+        ON p."month" = a."month" AND p.client_id = a.client_id
+    RIGHT JOIN user_attributes AS ua
+        ON ua.client_id = coalesce(a.client_id, p.client_id)
+    LEFT JOIN user_contacts_latest AS contacts
+        ON contacts.client_id = ua.client_id
+ORDER BY 1,2;
