@@ -4,6 +4,7 @@ import os
 
 from run_checker import submit
 
-DE_S1_TEST = 'de01060202'
 
-submit(os.path.dirname(os.path.abspath(__file__)), DE_S1_TEST)
+submit(
+    os.path.dirname(os.path.abspath(__file__)),
+    'de01070202_select_date_trunc')
