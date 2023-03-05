@@ -4,10 +4,9 @@ import sys
 
 import requests
 
-from settings import PG_SETTINGS, STUDENT
+from settings import STUDENT
 
-
-CHECK_SERVICE_HOST = 'localhost:8000'
+CHECK_SERVICE_HOST = 'http://localhost:6001'
 API_PATH = 'api/v1/checks'
 
 
@@ -23,6 +22,25 @@ class TerminalColors:
     UNDERLINE = '\033[4m'
 
 
+def create_playground():
+    address = 'api/v1/playgrounds'
+    try:
+        r = requests.post(
+            f'{CHECK_SERVICE_HOST}/{address}',
+            json={
+                'student_id': STUDENT
+            }
+        )
+
+    except Exception as e:
+        return print(e)
+
+    if r.status_code == 200:
+        print(f'\n{TerminalColors.OKGREEN}{r.json()}{TerminalColors.ENDC}\n')
+    else:
+        print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}')
+
+
 def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
 
     user_file = f'{task_path}/{rlz_file}'
@@ -31,16 +49,15 @@ def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
         with open(user_file, 'r', encoding="utf8") as u_file:
             user_code = u_file.read()
     except FileNotFoundError:
-        print(f'{TerminalColors.WARNING}Не найден файл `{user_file}{TerminalColors.ENDC}`\n\nСохраните решение в {task_path}/{rlz_file}')
+        print(f'{TerminalColors.WARNING}Не найден файл `{user_file}{TerminalColors.ENDC}`\n\nСохраните решение в {task_path}/{rlz_file}')  # noqa
         sys.exit()
 
     try:
         r = requests.post(
-            f'http://{CHECK_SERVICE_HOST}/{API_PATH}/{checker}',
+            f'{CHECK_SERVICE_HOST}/{API_PATH}/{checker}',
             json={
                 "student_id": STUDENT,
-                "student_solution": user_code,
-                "student_db_connection": PG_SETTINGS
+                "student_solution": user_code
             },
             timeout=300
         )
@@ -51,9 +68,11 @@ def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
 
     if r.status_code == 200:
         if r.json()['status'] == 'success':
-            print(f'\n{TerminalColors.OKGREEN}{r.json()["message"]}{TerminalColors.ENDC}\n')
+            print(
+                f'\n{TerminalColors.OKGREEN}{r.json()["message"]}{TerminalColors.ENDC}\n')
         else:
-            print(f'\n{TerminalColors.FAIL}{r.json()["message"]}{TerminalColors.ENDC}\n')
+            print(
+                f'\n{TerminalColors.FAIL}{r.json()["message"]}{TerminalColors.ENDC}\n')
     else:
         print(
             f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{checker}{TerminalColors.ENDC}')
@@ -63,7 +82,7 @@ def healthcheck():
     checker = 'api/v1/health/healthcheck'
     try:
         r = requests.get(
-            f'http://{CHECK_SERVICE_HOST}/{checker}'
+            f'{CHECK_SERVICE_HOST}/{checker}'
         )
 
     except Exception as e:
@@ -75,11 +94,10 @@ def init():
     checker = 'api/v1/dbschema/init'
     try:
         r = requests.post(
-            f'http://{CHECK_SERVICE_HOST}/{checker}',
+            f'{CHECK_SERVICE_HOST}/{checker}',
             json={
                 'student_id': STUDENT,
-                'lesson_key': 'de01010101',
-                'student_db_connection': PG_SETTINGS
+                'lesson_key': 'de01010101'
             }
         )
 
