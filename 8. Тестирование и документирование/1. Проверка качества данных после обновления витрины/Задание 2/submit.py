@@ -7,4 +7,4 @@ from run_checker import submit
 
 submit(
     os.path.dirname(os.path.abspath(__file__)),
-    'de01040303_phone_region_code')
+    'de01080102_add_column_id')
