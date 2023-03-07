@@ -23,7 +23,7 @@ class TerminalColors:
 
 
 def create_playground():
-    address = 'api/v1/playgrounds'
+    address = 'api/v1/playgrounds/'
     try:
         r = requests.post(
             f'{CHECK_SERVICE_HOST}/{address}',
@@ -54,7 +54,7 @@ def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
 
     try:
         r = requests.post(
-            f'{CHECK_SERVICE_HOST}/{API_PATH}/{checker}',
+            f'{CHECK_SERVICE_HOST}/{API_PATH}/{checker}/',
             json={
                 "student_id": STUDENT,
                 "student_solution": user_code
