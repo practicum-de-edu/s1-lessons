@@ -6,7 +6,7 @@ import requests
 
 from settings import STUDENT
 
-CHECK_SERVICE_HOST = 'http://localhost:6001'
+CHECK_SERVICE_HOST = 'https://de-sprint1-checks.sprint9.tgcloudenv.ru'
 API_PATH = 'api/v1/checks'
 
 
@@ -22,6 +22,7 @@ class TerminalColors:
     UNDERLINE = '\033[4m'
 
 
+@staticmethod
 def create_playground():
     address = 'api/v1/playgrounds'
     try:
@@ -78,6 +79,7 @@ def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
             f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{checker}{TerminalColors.ENDC}')
 
 
+@staticmethod
 def healthcheck():
     checker = 'api/v1/health/healthcheck'
     try:
@@ -90,22 +92,5 @@ def healthcheck():
     return r, r.content
 
 
-def init():
-    checker = 'api/v1/dbschema/init'
-    try:
-        r = requests.post(
-            f'{CHECK_SERVICE_HOST}/{checker}',
-            json={
-                'student_id': STUDENT,
-                'lesson_key': 'de01010101'
-            }
-        )
-
-    except Exception as e:
-        return e
-    return r, r.content
-
-
 if __name__ == '__main__':
-    print(f'{healthcheck() = }')
-    print(f'{init() = }')
+    print(f'{healthcheck = }')
