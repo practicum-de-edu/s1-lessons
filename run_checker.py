@@ -6,7 +6,7 @@ import requests
 
 from settings import STUDENT
 
-CHECK_SERVICE_HOST = 'http://localhost:6001'
+CHECK_SERVICE_HOST = 'https://de-sprint1-checks.sprint9.tgcloudenv.ru'
 API_PATH = 'api/v1/checks'
 
 
@@ -23,7 +23,7 @@ class TerminalColors:
 
 
 def create_playground():
-    address = 'api/v1/playgrounds'
+    address = 'api/v1/playgrounds/'
     try:
         r = requests.post(
             f'{CHECK_SERVICE_HOST}/{address}',
@@ -38,7 +38,7 @@ def create_playground():
     if r.status_code == 200:
         print(f'\n{TerminalColors.OKGREEN}{r.json()}{TerminalColors.ENDC}\n')
     else:
-        print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}')
+        print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{r.text}{TerminalColors.ENDC}')
 
 
 def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
@@ -54,7 +54,7 @@ def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
 
     try:
         r = requests.post(
-            f'{CHECK_SERVICE_HOST}/{API_PATH}/{checker}',
+            f'{CHECK_SERVICE_HOST}/{API_PATH}/{checker}/',
             json={
                 "student_id": STUDENT,
                 "student_solution": user_code
