@@ -2,4 +2,4 @@
 
 from run_checker import create_playground
 
-create_playground
+create_playground()

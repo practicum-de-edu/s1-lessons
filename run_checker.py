@@ -22,7 +22,6 @@ class TerminalColors:
     UNDERLINE = '\033[4m'
 
 
-@staticmethod
 def create_playground():
     address = 'api/v1/playgrounds'
     try:
@@ -79,7 +78,6 @@ def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
             f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{checker}{TerminalColors.ENDC}')
 
 
-@staticmethod
 def healthcheck():
     checker = 'api/v1/health/healthcheck'
     try:
@@ -93,4 +91,4 @@ def healthcheck():
 
 
 if __name__ == '__main__':
-    print(f'{healthcheck = }')
+    print(f'{healthcheck() = }')
