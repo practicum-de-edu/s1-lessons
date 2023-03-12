@@ -90,22 +90,5 @@ def healthcheck():
     return r, r.content
 
 
-def init():
-    checker = 'api/v1/dbschema/init'
-    try:
-        r = requests.post(
-            f'{CHECK_SERVICE_HOST}/{checker}',
-            json={
-                'student_id': STUDENT,
-                'lesson_key': 'de01010101'
-            }
-        )
-
-    except Exception as e:
-        return e
-    return r, r.content
-
-
 if __name__ == '__main__':
     print(f'{healthcheck() = }')
-    print(f'{init() = }')
