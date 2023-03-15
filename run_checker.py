@@ -39,6 +39,7 @@ def create_playground():
         print(f'\n{TerminalColors.OKGREEN}{r.json()}{TerminalColors.ENDC}\n')
     else:
         print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}')
+        print(r.json())
 
 
 def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
@@ -68,14 +69,12 @@ def submit(task_path: str, checker: str, rlz_file: str = 'realization.sql'):
 
     if r.status_code == 200:
         if r.json()['status'] == 'success':
-            print(
-                f'\n{TerminalColors.OKGREEN}{r.json()["message"]}{TerminalColors.ENDC}\n')
+            print(f'\n{TerminalColors.OKGREEN}{r.json()["message"]}{TerminalColors.ENDC}\n')
         else:
-            print(
-                f'\n{TerminalColors.FAIL}{r.json()["message"]}{TerminalColors.ENDC}\n')
+            print(f'\n{TerminalColors.FAIL}{r.json()["message"]}{TerminalColors.ENDC}\n')
     else:
-        print(
-            f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{checker}{TerminalColors.ENDC}')
+        print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{checker}{TerminalColors.ENDC}')
+        print(r.json())
 
 
 def healthcheck():
