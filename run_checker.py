@@ -1,13 +1,35 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 
 import requests
 
-from settings import STUDENT
+from settings import INVITE_TOKEN, STUDENT
 
-CHECK_SERVICE_HOST = 'https://de-sprint1-checks.sprint9.tgcloudenv.ru'
+TOKEN_PATH = '.check_service_token'
+PUBLIC_CHECK_SERVICE_HOST = 'https://de-sprint1-checks.sprint9.tgcloudenv.ru'
+CHECK_SERVICE_HOST = os.getenv('CHECK_SERVICE_HOST', PUBLIC_CHECK_SERVICE_HOST)
 API_PATH = 'api/v1/checks'
+
+
+class TokenRepository:
+    def __init__(self, token_path):
+        self.token_path = token_path
+
+    def get_token(self):
+        try:
+            with open(self.token_path, 'r') as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            return None
+
+    def save_token(self, token):
+        with open(self.token_path, 'w') as f:
+            f.write(token)
+
+
+token_repository = TokenRepository(TOKEN_PATH)
 
 
 class TerminalColors:
@@ -22,21 +44,72 @@ class TerminalColors:
     UNDERLINE = '\033[4m'
 
 
+def auth_user():
+    address = 'api/v1/auth/token/'
+
+    try:
+        r = requests.post(
+            f'{CHECK_SERVICE_HOST}/{address}',
+            data={
+                'username': str(STUDENT),
+                "password": str(INVITE_TOKEN)
+            }
+        )
+
+    except Exception as e:
+        print(e)
+        return
+
+    if r.status_code == 200:
+        token_repository.save_token(r.json()['access_token'])
+        print(f'\n{TerminalColors.OKGREEN}{r.json()}{TerminalColors.ENDC}\n')
+    elif r.status_code == 400:
+        print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}{TerminalColors.ENDC}')
+        print(f'\n{TerminalColors.WARNING}{r.json()}{TerminalColors.ENDC}\n')
+    else:
+        print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}')
+        print(r.json())
+
+
 def create_playground():
     address = 'api/v1/playgrounds/'
     try:
         r = requests.post(
             f'{CHECK_SERVICE_HOST}/{address}',
-            json={
-                'student_id': STUDENT
-            }
+            headers={"Authorization": f"Bearer {token_repository.get_token()}"}
         )
 
     except Exception as e:
-        return print(e)
+        print(e)
+        return
 
     if r.status_code == 200:
         print(f'\n{TerminalColors.OKGREEN}{r.json()}{TerminalColors.ENDC}\n')
+    elif r.status_code == 400:
+        print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}{TerminalColors.ENDC}')
+        print(f'\n{TerminalColors.WARNING}{r.json()}{TerminalColors.ENDC}\n')
+    else:
+        print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}')
+        print(r.json())
+
+
+def get_playground():
+    address = 'api/v1/playgrounds/'
+    try:
+        r = requests.get(
+            f'{CHECK_SERVICE_HOST}/{address}',
+            headers={"Authorization": f"Bearer {token_repository.get_token()}"},
+        )
+
+    except Exception as e:
+        print(e)
+        return
+
+    if r.status_code == 200:
+        print(f'\n{TerminalColors.OKGREEN}{r.json()}{TerminalColors.ENDC}\n')
+    elif r.status_code == 400:
+        print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}{TerminalColors.ENDC}')
+        print(f'\n{TerminalColors.WARNING}{r.json()}{TerminalColors.ENDC}\n')
     else:
         print(f'{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}')
         print(r.json())
