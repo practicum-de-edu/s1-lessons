@@ -5,6 +5,4 @@ import os
 from run_checker import submit
 
 
-submit(
-    os.path.dirname(os.path.abspath(__file__)),
-    'de01080102_add_column_id')
+submit(os.path.dirname(os.path.abspath(__file__)), "de01080102_add_column_id")
