@@ -7,7 +7,7 @@ import requests
 
 from settings import STUDENT
 
-INVITE_TOKEN = "5aa046d73fd004ea6e6f527b8cd0ef08fd13e12877377407565c244dc630a872"
+INVITE_TOKEN = os.getenv('INVITE_TOKEN')
 
 TOKEN_PATH = ".check_service_token"
 PUBLIC_CHECK_SERVICE_HOST = "https://de-sprint1-checks.sprint9.tgcloudenv.ru"
@@ -87,8 +87,7 @@ def create_playground():
     if r.status_code == 200:
         print(f"\n{TerminalColors.OKGREEN}{r.json()}{TerminalColors.ENDC}\n")
     elif r.status_code == 400:
-        print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}{TerminalColors.ENDC}")
-        print(f"\n{TerminalColors.WARNING}{r.json()}{TerminalColors.ENDC}\n")
+        print(f"\n{TerminalColors.WARNING}{r.json()['message']}{TerminalColors.ENDC}\n")
     else:
         print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}")
         print(r.json())
@@ -111,6 +110,8 @@ def get_playground():
     elif r.status_code == 400:
         print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}{TerminalColors.ENDC}")
         print(f"\n{TerminalColors.WARNING}{r.json()}{TerminalColors.ENDC}\n")
+    elif r.status_code == 504:
+        print(f"{TerminalColors.FAIL}Пользователь с логином `{STUDENT}` не найден, сперва запустите `1. Введение/6. Как работает Docker-тренажёр/Задание 1/submit.py`{TerminalColors.ENDC}")
     else:
         print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}")
         print(r.json())
@@ -147,6 +148,8 @@ def submit(task_path: str, checker: str, rlz_file: str = "realization.sql"):
             print(f'\n{TerminalColors.OKGREEN}{r.json()["message"]}{TerminalColors.ENDC}\n')
         else:
             print(f'\n{TerminalColors.FAIL}{r.json()["message"]}{TerminalColors.ENDC}\n')
+    elif r.status_code == 401:
+        print(f'{TerminalColors.FAIL}Не авторизованный доступ, выполните запуск `1. Введение/6. Как работает Docker-тренажёр/Задание 1/submit.py`{TerminalColors.ENDC}')
     else:
         print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{checker}{TerminalColors.ENDC}")
         print(r.json())
