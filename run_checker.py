@@ -1,11 +1,12 @@
 import os
 import sys
+import json
 
 import requests
 
 from settings import STUDENT
 
-INVITE_TOKEN = "5aa046d73fd004ea6e6f527b8cd0ef08fd13e12877377407565c244dc630a872"
+INVITE_TOKEN = "5aa046d73fd004ea6e6f527b8cd0ef08fd13e12877377407565c244dc630a872"  # noqa
 
 TOKEN_PATH = ".check_service_token"
 PUBLIC_CHECK_SERVICE_HOST = "https://de-sprint1-checks.sprint9.tgcloudenv.ru"
@@ -32,16 +33,9 @@ class TokenRepository:
 token_repository = TokenRepository(TOKEN_PATH)
 
 
-class TerminalColors:
-    HEADER = "\033[95m"
-    OKBLUE = "\033[94m"
-    OKCYAN = "\033[96m"
-    OKGREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
+def service_error(status_code, address):
+    print('Что-то пошло не так, сервер вернул ошибку '
+          f'{status_code}\n{address}\nПовторите запрос через минуту.')
 
 
 def auth_user():
@@ -54,18 +48,20 @@ def auth_user():
         )
 
     except Exception as e:
-        print(f"{TerminalColors.FAIL}Не получилось создать пользователя из-за ошибки.{TerminalColors.ENDC}")
+        print("Не получилось создать пользователя из-за ошибки.")
         print(e)
         return
 
     if r.status_code == 200:
         token_repository.save_token(r.json()["access_token"])
     elif r.status_code == 400:
-        print(f"{TerminalColors.FAIL}Не получилось создать пользователя {r.status_code}.{TerminalColors.ENDC}")
-        print(f"\n{TerminalColors.WARNING}{r.json()}{TerminalColors.ENDC}\n")
+        print("Не получилось создать пользователя")
     else:
-        print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}")
-        print(r.json())
+        service_error(r.status_code, address)
+
+
+def headers():
+    return {"Authorization": f"Bearer {token_repository.get_token()}"}
 
 
 def create_playground():
@@ -75,7 +71,7 @@ def create_playground():
     try:
         r = requests.post(
             f"{CHECK_SERVICE_HOST}/{address}",
-            headers={"Authorization": f"Bearer {token_repository.get_token()}"},
+            headers=headers(),
         )
 
     except Exception as e:
@@ -83,12 +79,18 @@ def create_playground():
         return
 
     if r.status_code == 200:
-        print(f"\n{TerminalColors.OKGREEN}{r.json()}{TerminalColors.ENDC}\n")
+        response = r.json()
+        message = response.pop('message', None)
+        response.pop('student_id', None)
+        response.pop('secret_key', None)
+        print('Параметры подключения:\n'
+              f'{json.dumps(response, indent=1)}\n'
+              f'{message}')
+
     elif r.status_code == 400:
-        print(f"\n{TerminalColors.WARNING}{r.json()['message']}{TerminalColors.ENDC}\n")
+        print(f"{r.json()['message']}")
     else:
-        print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}")
-        print(r.json())
+        service_error(r.status_code, address)
 
 
 def get_playground():
@@ -96,7 +98,7 @@ def get_playground():
     try:
         r = requests.get(
             f"{CHECK_SERVICE_HOST}/{address}",
-            headers={"Authorization": f"Bearer {token_repository.get_token()}"},
+            headers=headers(),
         )
 
     except Exception as e:
@@ -104,15 +106,27 @@ def get_playground():
         return
 
     if r.status_code == 200:
-        print(f"\n{TerminalColors.OKGREEN}{r.json()}{TerminalColors.ENDC}\n")
+        response = r.json()
+        response.pop('message', None)
+        response.pop('student_id', None)
+        response.pop('secret_key', None)
+        print('\nПараметры подключения:\n'
+              f"{json.dumps(response['student_db_connection'], indent=1)}")
     elif r.status_code == 400:
-        print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}{TerminalColors.ENDC}")
-        print(f"\n{TerminalColors.WARNING}{r.json()}{TerminalColors.ENDC}\n")
+        print(f"Что-то пошло не так, сервер вернул ошибку {r.status_code}")
+    elif r.status_code == 401:
+        message_401()
     elif r.status_code == 504:
-        print(f"{TerminalColors.FAIL}Пользователь с логином `{STUDENT}` не найден, сперва запустите `1. Введение/6. Как работает Docker-тренажёр/Задание 1/submit.py`{TerminalColors.ENDC}")
+        print(f"Пользователь с логином `{STUDENT}` не найден, сперва запусти"
+              "те `Тема 2. Инструменты/2.4 Запустите среду для"
+              " тестирования/submit.py`")
     else:
-        print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{address}{TerminalColors.ENDC}")
-        print(r.json())
+        service_error(r.status_code, address)
+
+
+def message_401():
+    print('Не авторизованный доступ, выполните запуск `Тема 2. '
+          'Инструменты/2.4 Запустите среду для тестирования/submit.py')
 
 
 def submit(task_path: str, checker: str, rlz_file: str = "realization.sql"):
@@ -122,19 +136,15 @@ def submit(task_path: str, checker: str, rlz_file: str = "realization.sql"):
         with open(user_file, "r", encoding="utf8") as u_file:
             user_code = u_file.read()
     except FileNotFoundError:
-        no_file_msg = f"{TerminalColors.WARNING}Не найден файл `{user_file}{TerminalColors.ENDC}`"
-
-        save_msg = f"Сохраните решение в {task_path}/{rlz_file}"
-
-        print(f"{no_file_msg}\n\n{save_msg}")  # noqa
+        print(f'Не найден файл `{user_file}\n'
+              f'Сохраните решение в {task_path}/{rlz_file}')
         sys.exit()
 
     try:
         r = requests.post(
             f"{CHECK_SERVICE_HOST}/{API_PATH}/{checker}/",
             json={"student_id": STUDENT, "student_solution": user_code},
-            headers={"Authorization": f"Bearer {token_repository.get_token()}"},
-            timeout=300,
+            headers=headers(),
         )
 
     except Exception as e:
@@ -143,14 +153,13 @@ def submit(task_path: str, checker: str, rlz_file: str = "realization.sql"):
 
     if r.status_code == 200:
         if r.json()["status"] == "success":
-            print(f'\n{TerminalColors.OKGREEN}{r.json()["message"]}{TerminalColors.ENDC}\n')
+            print(f'\n{r.json()["message"]}\n')
         else:
-            print(f'\n{TerminalColors.FAIL}{r.json()["message"]}{TerminalColors.ENDC}\n')
+            print(f'\n{r.json()["message"]}\n')
     elif r.status_code == 401:
-        print(f'{TerminalColors.FAIL}Не авторизованный доступ, выполните запуск `1. Введение/6. Как работает Docker-тренажёр/Задание 1/submit.py`{TerminalColors.ENDC}')
+        message_401()
     else:
-        print(f"{TerminalColors.FAIL}Что-то пошло не так, сервер вернул ошибку {r.status_code}\n{checker}{TerminalColors.ENDC}")
-        print(r.json())
+        service_error(r.status_code, checker)
 
 
 def healthcheck():

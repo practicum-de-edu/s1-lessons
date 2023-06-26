@@ -3,7 +3,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)).split('Тема')[0])
 
-from run_checker import get_playground
+from run_checker import get_playground  # noqa
 
 
 get_playground()
