@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import sys
 
@@ -7,7 +5,7 @@ import requests
 
 from settings import STUDENT
 
-INVITE_TOKEN = os.getenv('INVITE_TOKEN')
+INVITE_TOKEN = "5aa046d73fd004ea6e6f527b8cd0ef08fd13e12877377407565c244dc630a872"
 
 TOKEN_PATH = ".check_service_token"
 PUBLIC_CHECK_SERVICE_HOST = "https://de-sprint1-checks.sprint9.tgcloudenv.ru"
